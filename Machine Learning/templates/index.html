@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Diabetes Prediction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: -moz-radial-gradient(0% 100%, ellipse cover, rgba(104, 128, 138, .4) 10%, rgba(138, 114, 76, 0) 40%), -moz-linear-gradient(top, rgba(57, 173, 219, .25) 0%, rgba(42, 60, 87, .4) 100%), -moz-linear-gradient(-45deg, #670d10 0%, #092756 100%);
+            background: -webkit-radial-gradient(0% 100%, ellipse cover, rgba(104, 128, 138, .4) 10%, rgba(138, 114, 76, 0) 40%), -webkit-linear-gradient(top, rgba(57, 173, 219, .25) 0%, rgba(42, 60, 87, .4) 100%), -webkit-linear-gradient(-45deg, #670d10 0%, #092756 100%);
+            background: -o-radial-gradient(0% 100%, ellipse cover, rgba(104, 128, 138, .4) 10%, rgba(138, 114, 76, 0) 40%), -o-linear-gradient(top, rgba(57, 173, 219, .25) 0%, rgba(42, 60, 87, .4) 100%), -o-linear-gradient(-45deg, #670d10 0%, #092756 100%);
+            background: -ms-radial-gradient(0% 100%, ellipse cover, rgba(104, 128, 138, .4) 10%, rgba(138, 114, 76, 0) 40%), -ms-linear-gradient(top, rgba(57, 173, 219, .25) 0%, rgba(42, 60, 87, .4) 100%), -ms-linear-gradient(-45deg, #670d10 0%, #092756 100%);
+            background: -webkit-radial-gradient(0% 100%, ellipse cover, rgba(104, 128, 138, .4) 10%, rgba(138, 114, 76, 0) 40%), linear-gradient(to bottom, rgba(57, 173, 219, .25) 0%, rgba(42, 60, 87, .4) 100%), linear-gradient(135deg, #670d10 0%, #092756 100%);
+            filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#3E1D6D', endColorstr='#092756', GradientType=1);
+        }
+
+        .container {
+            text-align: center;
+            max-width: 400px; /* Adjust the max-width of the container */
+            /* margin: 0 auto; Center the container horizontally */
+            margin-top: -50px ;
+        }
+
+        h1 {
+            text-align: center;
+            color: #fff; /* Changed font color to white */
+            text-decoration: underline; /* Added underline to the heading */
+        }
+
+        input[type="number"] {
+            width: 100%;
+            max-width: 300px; /* Adjust the max-width of the input boxes */
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+            margin-bottom: 10px; /* Add a margin at the bottom of each input box */
+        }
+
+        textarea {
+            width: 100%;
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            padding: 10px 15px; /* Decreased padding */
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 1px;
+            margin-right: 10px; /* Added margin-right to create space between buttons */
+            flex: 1; /* Use flexbox to arrange buttons horizontally */
+        }
+        button[type="submit"] {
+            width: 120px; /* Adjust the width as needed */
+        }
+
+        button#clear-button {
+            width: 120px; /* Adjust the width as needed */
+            /* background-color: #6c757d; Different background color for the Clear button */
+        }
+
+        #prediction-result {
+            margin-top: 15px; /* Add margin between the button and the prediction result */
+            font-size: 18px; /* Increase font size for the prediction result */
+            font-weight: bold; /* Make the text bold */
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Diabetes Prediction - Knn Classification</h1>
+        <form id = "prediction-form">
+            <input type="number" id="pregnancies" name="pregnancies" placeholder="Number of pregnancies" required>
+            <input type="number" id="glucose" name="glucose" placeholder="Glucose level" required>
+            <input type="number" id="bloodPressure" name="bloodPressure" placeholder="Blood pressure" required>
+            <input type="number" id="skinThickness" name="skinThickness" placeholder="Skin thickness" required>
+            <input type="text" id="insulin" name="insulin" placeholder="Insulin level" required>
+            <input type="text" id="bmi" name="bmi" placeholder="Body Mass Index" required>
+            <input type="text" id="diabetesPedigreeFunction" name="diabetesPedigreeFunction" placeholder="Diabetes Pedigree Function" required>
+            <input type="number" id="age" name="age" placeholder="Age" required>
+            <button type="submit">Predict</button>
+            <button type="button" id="clear-button">Clear</button>
+        </form>
+        <div id="prediction-result" style="display: none;"></div>
+    </div>
+
+    <script>
+        document.getElementById("prediction-form").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent form submission to avoid page reload
+
+            // Get the input values from the form
+            const pregnancies = parseFloat(document.getElementById("pregnancies").value);
+            const glucose = parseFloat(document.getElementById("glucose").value);
+            const bloodPressure = parseFloat(document.getElementById("bloodPressure").value);
+            const skinThickness = parseFloat(document.getElementById("skinThickness").value);
+            const insulin = parseFloat(document.getElementById("insulin").value);
+            const bmi = parseFloat(document.getElementById("bmi").value);
+            const diabetesPedigreeFunction = parseFloat(document.getElementById("diabetesPedigreeFunction").value);
+            const age = parseFloat(document.getElementById("age").value);
+
+            // Send the data to Flask server using AJAX
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "/predict");
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    const predictionResult = response.prediction;
+                    const resultLabel = predictionResult === 1 ? "Person Has Diabetes ? : Yes" : "Person Has Diabetes ? : No";
+                    document.getElementById("prediction-result").innerText = resultLabel;
+                    document.getElementById("prediction-result").style.display = "block";
+                } else {
+                    alert("Prediction failed. Please try again.");
+                }
+            };
+
+            // Convert input data to JSON and send it in the request body
+            const inputData = JSON.stringify({
+                pregnancies,
+                glucose,
+                bloodPressure,
+                skinThickness,
+                insulin,
+                bmi,
+                diabetesPedigreeFunction,
+                age
+            });
+
+            xhr.send(inputData);
+        });
+
+        document.getElementById("clear-button").addEventListener("click", function() {
+            // Clear all input fields
+            document.getElementById("pregnancies").value = "";
+            document.getElementById("glucose").value = "";
+            document.getElementById("bloodPressure").value = "";
+            document.getElementById("skinThickness").value = "";
+            document.getElementById("insulin").value = "";
+            document.getElementById("bmi").value = "";
+            document.getElementById("diabetesPedigreeFunction").value = "";
+            document.getElementById("age").value = "";
+
+            // Hide the prediction result display
+            document.getElementById("prediction-result").style.display = "none";
+        });
+    </script>
+</body>
+</html>
